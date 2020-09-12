@@ -1,27 +1,37 @@
-let users = [
-  { username: "Akarsh", email: "akarsh1888@gmail.com" },
-  { username: "1", email: "a" },
-  { username: "2", email: "b" },
-];
+// This represents our UserModel
+const UserModel = require("../database/models/user_model");
+
+// var akarsh = new UserModel({
+//   username: "akarsh",
+//   email: "akarsh1888@gmail.com",
+//   host: "MC",
+// });
+// akarsh.save().then((e) => console.log("saved"));
 
 class RootService {
+  // it returns a promise
   getUsers() {
-    return users;
+    return UserModel.find({});
   }
 
-  createUser(userInfo) {
-    users.push(userInfo);
-    return users;
+  async createUser({ email, username, host }) {
+    const user = new UserModel();
+    user.username = username;
+    user.email = email;
+    user.host = host;
+    // returns a promise
+    return user.save();
   }
 
   getUserByEmail(emailInfo) {
-    return users.find((user) => user.email === emailInfo);
+    return UserModel.find({ email: emailInfo });
   }
   removeUserByEmail(emailInfo) {
-    var s = String(emailInfo);
-    var data = users.filter((user) => user.email !== s);
-    users = [...data];
-    return data;
+    return UserModel.findOneAndRemove({ email: emailInfo });
+  }
+  // we r sorting & returning the data on the basis of "email" attribute
+  filterUserByEmail() {
+    return UserModel.find({});
   }
 }
 

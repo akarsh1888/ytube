@@ -1,6 +1,6 @@
 var mongoose = require("mongoose");
 
-var mongodb = "mongodb://localhost:27017/my_db";
+var mongodb = "mongodb://127.0.0.1:27017/test";
 
 mongoose.connect(mongodb, { useNewUrlParser: true });
 

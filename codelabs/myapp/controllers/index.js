@@ -4,24 +4,86 @@ var rootService = new RootService();
 // controllers decide which of data should be send to the route
 // ie. 1) html view 2)read/write from DB using some (DATA MODELS)   3) normal json/text response
 class RootController {
-  createUser(req, res) {
+  async createUser(req, res) {
     // http post
-    const data = rootService.createUser(req.body);
-    console.log(req.body);
-    return res.status(200).json({ message: data });
+    try {
+      const data = await rootService.createUser(req.body);
+      return res.status(200).send({
+        message: "USER STORED SUCCESSFULLY",
+        data,
+      });
+    } catch (err) {
+      return res.status(500).send(err);
+    }
+
+    /**
+     * WITHOUT ASYNC AWAIT
+     */
+
+    //     .then((data) => {
+    //       res.status(200).json({
+    //         message: "DATA STORED SUCCESSFULLY",
+    //         data,
+    //       });
+    //     })
+    //     .catch((err) => {
+    //       res.status(500).send(err);
+    //     });
   }
 
   getUsers(req, res) {
-    const data = rootService.getUsers();
-    return res.status(200).json({ message: data });
+    return rootService
+      .getUsers()
+      .then((data) => {
+        res.status(200).send({
+          message: "USER FETCHED SUCCESSFULLY",
+          data,
+        });
+      })
+      .catch((err) => {
+        res.status(500).send(err);
+      });
   }
   getUserByEmail(req, res) {
-    const data = rootService.getUserByEmail(req.params.email);
-    return res.status(200).json({ message: data });
+    return rootService
+      .getUserByEmail(req.params.email)
+      .then((data) => {
+        res.status(200).send({
+          message: "USER FETCHED BY EMAIL SUCCESSFULLY",
+          data,
+        });
+      })
+      .catch((err) => {
+        res.status(500).send(err);
+      });
   }
   deleteUserByEmail(req, res) {
-    var data = rootService.removeUserByEmail(req.params.email);
-    return res.status(200).json(data);
+    return rootService
+      .removeUserByEmail(req.params.email)
+      .then((data) => {
+        res.status(200).send({
+          message: "USER REMOVED SUCCESSFULLY",
+          data,
+        });
+      })
+      .catch((err) => {
+        res.status(500).send(err);
+      });
+  }
+  filterUserByEmail(req, res) {
+    // let flag = req.query.email === "true" ? true : false;
+    // console.log(req.query);
+    return rootService
+      .filterUserByEmail()
+      .then((data) => {
+        res.status(200).send({
+          message: "USERS FILTERED SUCCESSFULLY",
+          data,
+        });
+      })
+      .catch((err) => {
+        res.status(500).send(err);
+      });
   }
 }
 
