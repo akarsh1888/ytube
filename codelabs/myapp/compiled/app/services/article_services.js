@@ -12,46 +12,46 @@ exports.createPost = createPost;
 
 var _error = _interopRequireDefault(require("../../config/error.messages"));
 
+var _article_model = _interopRequireDefault(require("../models/article_model"));
+
+var _user_model = _interopRequireDefault(require("../models/user_model"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-const ArticleModel = require('../database/models/article_model');
-
-const UserModel = require('../database/models/user_model');
 
 function findAll({
   limit = 50,
   offset = 0
 } = {}) {
-  return ArticleModel.find({});
+  return _article_model.default.find({}).exec();
 }
 
 function findById(id) {
-  return ArticleModel.findById(id).populate('user');
+  return _article_model.default.findById(id).populate('user');
 }
 
 function updatePost(postId, post) {
-  return ArticleModel.findByIdAndUpdate(postId, post, {
+  return _article_model.default.findByIdAndUpdate(postId, post, {
     new: true
   });
 }
 
 function deletePost(postId) {
-  return ArticleModel.findByIdAndRemove(postId);
+  return _article_model.default.findByIdAndRemove(postId);
 }
 
 function getPostByUser(userId, {
   limit = 50,
   offset = 0
 } = {}) {
-  return ArticleModel.find({
+  return _article_model.default.find({
     user: userId
   });
 }
 
 async function createPost(post, userId) {
-  const newPost = await ArticleModel.create(post);
+  const newPost = await _article_model.default.create(post);
   const id = newPost._id;
-  const user = await UserModel.findById(userId);
+  const user = await _user_model.default.findById(userId);
 
   if (!user) {
     throw new Error(_error.default.USER_NOT_FOUND);

@@ -29,14 +29,12 @@ router.get('/', function (req, res, next) {
     condition: true,
     anyArray: [1, 2, 3]
   });
-});
-router.post('/', function (req, res, next) {
-  res.redirect('/1');
-});
-router.get('/:id', function (req, res, next) {
-  res.render('test', {
-    output: req.params.id
-  });
-});
+}); // router.post('/', function (req, res, next) {
+//   res.redirect('/1')
+// })
+// router.get('/:id', function (req, res, next) {
+//   res.render('test', { output: req.params.id })
+// })
+
 var _default = router;
 exports.default = _default;

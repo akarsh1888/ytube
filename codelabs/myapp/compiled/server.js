@@ -29,8 +29,9 @@ mongoose.connect(process.env.MONGO, {
 }); // Bootstrap sequelize models
 
 const server = http.createServer((0, _express.start)());
-server.listen(5000 || process.env.PORT, () => {
-  logger.info('Application started on port ', 5000 || process.env.PORT);
+const PORT = process.env.PORT || 4000;
+server.listen(process.env.PORT || 4000, () => {
+  logger.info(`Application started on port ${PORT}`, process.env.PORT || 4000);
 });
 var _default = server;
 exports.default = _default;

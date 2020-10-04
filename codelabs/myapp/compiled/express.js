@@ -13,8 +13,6 @@ var _methodOverride = _interopRequireDefault(require("method-override"));
 
 var _cookieParser = _interopRequireDefault(require("cookie-parser"));
 
-var _helmet = _interopRequireDefault(require("helmet"));
-
 var _error = _interopRequireDefault(require("./config/error.messages"));
 
 var _index = _interopRequireDefault(require("./app/routes/index"));
@@ -25,8 +23,11 @@ var _morgan = _interopRequireDefault(require("morgan"));
 
 var _parent = _interopRequireDefault(require("./app/routes/parent"));
 
+var _jsonwebtoken = _interopRequireDefault(require("jsonwebtoken"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+// import helmet from 'helmet'
 var logger = require('winston');
 
 var hbs = require('express-handlebars');
@@ -60,13 +61,16 @@ const start = () => {
   app.use((0, _bodyParser.json)({
     type: 'application/*',
     limit: '30mb'
-  })); // for using query string in the URL
+  })); // for using query string in the URL, body parser method library is used
 
   app.use((0, _bodyParser.urlencoded)({
     extended: true
   })); // for cross domain communication from browser
 
-  app.use((0, _cors.default)()); // for logging out
+  const corsOptions = {
+    exposedHeaders: 'Authorization'
+  };
+  app.use((0, _cors.default)(corsOptions)); // for logging out
 
   app.use((0, _morgan.default)('dev'));
   app.use((0, _methodOverride.default)()); //   app.use(express.static(path.join(__dirname + "/app", "public")));
@@ -75,6 +79,20 @@ const start = () => {
   //   app.use(helmet.xssFilter());
   //   app.use(helmet.nosniff());
   //   app.use(helmet.ienoopen());
+
+  const authenticate = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+    console.log(token);
+    if (!token) return res.status(401).send('No token passed');
+
+    _jsonwebtoken.default.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, userKey) => {
+      if (err) return res.status(403).send('Token passed is invalid');
+      console.log(userKey);
+      req.user = userKey;
+      next();
+    });
+  };
 
   app.disable('x-powered-by');
   /*
@@ -105,7 +123,26 @@ const start = () => {
     next();
   });
   app.use('/', _index.default);
-  app.use('/api', _parent.default);
+  app.use('/api', _parent.default); // app.get('*', (req, res) =>
+  //   res.status(404).send({
+  //     message: 'Page Not Found',
+  //     currentservertime: new Date().toLocaleTimeString(),
+  //   })
+  // )
+
+  const users = [{
+    id: 1,
+    username: 'admin',
+    password: 'admin'
+  }, {
+    id: 2,
+    username: 'guest',
+    password: 'guest'
+  }]; // secret api
+
+  app.get('/secret', [authenticate], (req, res) => {
+    res.status(200).json('This is a private resource');
+  });
   /***
    * When we call next() function on a middleware control passes to another middleware
    *   ie. here in this case, controller written above are passing to these below error handlers

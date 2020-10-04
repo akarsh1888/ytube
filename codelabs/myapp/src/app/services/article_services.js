@@ -1,28 +1,28 @@
 import errorMessages from '../../config/error.messages'
-const ArticleModel = require('../database/models/article_model')
-const UserModel = require('../database/models/user_model')
+import Article from '../models/article_model'
+import User from '../models/user_model'
 
 export function findAll({ limit = 50, offset = 0 } = {}) {
-  return ArticleModel.find({})
+  return Article.find({}).exec()
 }
 
 export function findById(id) {
-  return ArticleModel.findById(id).populate('user')
+  return Article.findById(id).populate('user')
 }
 
 export function updatePost(postId, post) {
-  return ArticleModel.findByIdAndUpdate(postId, post, { new: true })
+  return Article.findByIdAndUpdate(postId, post, { new: true })
 }
 export function deletePost(postId) {
-  return ArticleModel.findByIdAndRemove(postId)
+  return Article.findByIdAndRemove(postId)
 }
 export function getPostByUser(userId, { limit = 50, offset = 0 } = {}) {
-  return ArticleModel.find({ user: userId })
+  return Article.find({ user: userId })
 }
 export async function createPost(post, userId) {
-  const newPost = await ArticleModel.create(post)
+  const newPost = await Article.create(post)
   const id = newPost._id
-  const user = await UserModel.findById(userId)
+  const user = await User.findById(userId)
   if (!user) {
     throw new Error(errorMessages.USER_NOT_FOUND)
   }

@@ -22,12 +22,12 @@ router.get('/', function (req, res, next) {
   })
 })
 
-router.post('/', function (req, res, next) {
-  res.redirect('/1')
-})
+// router.post('/', function (req, res, next) {
+//   res.redirect('/1')
+// })
 
-router.get('/:id', function (req, res, next) {
-  res.render('test', { output: req.params.id })
-})
+// router.get('/:id', function (req, res, next) {
+//   res.render('test', { output: req.params.id })
+// })
 
 export default router

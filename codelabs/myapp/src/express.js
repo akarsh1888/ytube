@@ -2,12 +2,13 @@ import express from 'express'
 import { json, urlencoded } from 'body-parser'
 import methodOverride from 'method-override'
 import cookieParser from 'cookie-parser'
-import helmet from 'helmet'
+// import helmet from 'helmet'
 import errorMessages from './config/error.messages'
 import indexRouter from './app/routes/index'
 import cors from 'cors'
 import morgan from 'morgan'
 import parentRouter from './app/routes/parent'
+import jwt from 'jsonwebtoken'
 var logger = require('winston')
 var hbs = require('express-handlebars')
 var path = require('path')
@@ -44,10 +45,13 @@ export const start = () => {
    */
   // Request body parsing middleware should be above methodOverride
   app.use(json({ type: 'application/*', limit: '30mb' }))
-  // for using query string in the URL
+  // for using query string in the URL, body parser method library is used
   app.use(urlencoded({ extended: true }))
   // for cross domain communication from browser
-  app.use(cors())
+  const corsOptions = {
+    exposedHeaders: 'Authorization',
+  }
+  app.use(cors(corsOptions))
   // for logging out
   app.use(morgan('dev'))
   app.use(methodOverride())
@@ -58,6 +62,21 @@ export const start = () => {
   //   app.use(helmet.xssFilter());
   //   app.use(helmet.nosniff());
   //   app.use(helmet.ienoopen());
+
+  const authenticate = (req, res, next) => {
+    const authHeader = req.headers['authorization']
+    const token = authHeader && authHeader.split(' ')[1]
+    console.log(token)
+    if (!token) return res.status(401).send('No token passed')
+
+    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, userKey) => {
+      if (err) return res.status(403).send('Token passed is invalid')
+      console.log(userKey)
+      req.user = userKey
+      next()
+    })
+  }
+
   app.disable('x-powered-by')
 
   /*
@@ -84,6 +103,23 @@ export const start = () => {
   })
   app.use('/', indexRouter)
   app.use('/api', parentRouter)
+
+  // app.get('*', (req, res) =>
+  //   res.status(404).send({
+  //     message: 'Page Not Found',
+  //     currentservertime: new Date().toLocaleTimeString(),
+  //   })
+  // )
+
+  const users = [
+    { id: 1, username: 'admin', password: 'admin' },
+    { id: 2, username: 'guest', password: 'guest' },
+  ]
+
+  // secret api
+  app.get('/secret', [authenticate], (req, res) => {
+    res.status(200).json('This is a private resource')
+  })
 
   /***
    * When we call next() function on a middleware control passes to another middleware

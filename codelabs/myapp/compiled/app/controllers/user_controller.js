@@ -22,8 +22,11 @@ to another middleware mostly avoided
 */
 const UserController = {
   list: async (req, res, next) => {
+    var filter = {};
+    req.query.username ? filter.userName = req.query.username : filter = {};
+
     try {
-      const data = await userService.findAll(req.query); // u can use send or json ,as express is smart enough to figure it out
+      const data = await userService.findAll(filter); // u can use send or json ,as express is smart enough to figure it out
       //  return res.json(data)
       // it is a return statement written here , treat it as a return implicitly,
 

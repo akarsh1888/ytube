@@ -4,6 +4,7 @@ import UserCtrl from '../controllers/user_controller'
 import ArticleCtrl from '../controllers/article_controller'
 var express = require('express')
 var router = express.Router()
+
 // Get all users based on input criteria such as status, limit..
 // Create a new user
 router
@@ -14,6 +15,7 @@ router
     UserValidator.uniqueValidator,
     UserCtrl.create,
   ])
+
 // 	Get a user by userid
 // 	Delete a user by userid
 router

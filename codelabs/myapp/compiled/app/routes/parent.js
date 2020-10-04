@@ -5,6 +5,12 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.default = void 0;
 
+var _auth = _interopRequireDefault(require("../controllers/auth.ctrl"));
+
+var _auth2 = require("../validators/auth.validator");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 var express = require('express');
 
 var router = express.Router();
@@ -21,9 +27,8 @@ treating them separate branches gives modularity
 */
 
 
-router.get('/', (req, res) => res.status(200).json({
-  message: 'iam on parent default route'
-}));
+router.post('/signup', [_auth2.hashedPassword], _auth.default.signup);
+router.post('/login', [_auth2.checkLogin], _auth.default.login);
 router.use('/users', usersRouter);
 router.use('/articles', articlesRouter);
 var _default = router;
