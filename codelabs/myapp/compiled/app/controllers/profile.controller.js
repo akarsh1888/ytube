@@ -7,7 +7,7 @@ exports.default = void 0;
 
 var _error = _interopRequireDefault(require("../../config/error.messages"));
 
-var userService = _interopRequireWildcard(require("../services/user_services"));
+var profileService = _interopRequireWildcard(require("../services/profile.service"));
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
@@ -20,41 +20,14 @@ Controller r also a middleware but with the intent of serving the data
 They r the final middleware in the stack for a request, no intention to proceed to do next(),pass on
 to another middleware mostly avoided
 */
-const UserController = {
-  list: async (req, res, next) => {
-    var filter = {};
-    req.query.username ? filter.userName = req.query.username : filter = {};
-
-    try {
-      const data = await userService.findAll(filter); // u can use send or json ,as express is smart enough to figure it out
-      //  return res.json(data)
-      // it is a return statement written here , treat it as a return implicitly,
-
-      res.status(200).send(data); // don't do this,
-      // u can choose either this OR below for error handling
-      // it will pass to the next middleware which we registered after all routes on the base page
-      // next(err)
-    } catch (err) {
-      res.status(500).send('errorMessages.SERVER_ERROR');
-    }
-  },
-  create: async (req, res, next) => {
-    const user = req.body;
-
-    try {
-      const data = await userService.createUser(user);
-      res.status(200).json(data);
-    } catch (err) {
-      res.status(500).send(_error.default.SERVER_ERROR);
-    }
-  },
+const profileCtrl = {
   get: async (req, res, next) => {
     const {
-      userId
-    } = req.params;
+      id
+    } = req.user;
 
     try {
-      const data = await userService.findUser(userId);
+      const data = await profileService.findProfile(id);
 
       if (!data) {
         res.status(404).send(_error.default.USER_NOT_FOUND);
@@ -66,26 +39,20 @@ const UserController = {
     }
   },
   put: async (req, res) => {
-    const userId = req.params.userId;
-    const user = req.body;
+    const {
+      id
+    } = req.user;
+    const {
+      user
+    } = req.body;
 
     try {
-      const data = await userService.updateUser(userId, user);
+      const data = await profileService.updateProfile(id, user);
       res.status(200).json(data);
     } catch (err) {
-      res.status(500).send(_error.default.SERVER_ERROR);
-    }
-  },
-  delete: async (req, res) => {
-    const userId = req.params.userId;
-
-    try {
-      const data = await userService.deleteUser(userId);
-      res.status(200).json(data);
-    } catch (err) {
-      res.status(500).send(_error.default.SERVER_ERROR);
+      res.status(500).send(err.message);
     }
   }
 };
-var _default = UserController;
+var _default = profileCtrl;
 exports.default = _default;

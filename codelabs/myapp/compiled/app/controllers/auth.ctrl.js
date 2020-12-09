@@ -22,23 +22,27 @@ function Response(status, data, messages, errors) {
   this.errors = errors;
 }
 
-const operations = {
+const authCtrl = {
   signup: async (req, res, next) => {
     try {
+      delete req.body.user.password_confirmation;
       const data = await authService.signUpUser(req.body.user);
       res.send(new Response('ok', data, 'User Registered Successfully', []));
     } catch (err) {
-      res.status(500).send(_error.default.SERVER_ERROR);
+      res.status(500).send(err.message);
     }
   },
   login: async (req, res, next) => {
     try {
       const token = await authService.loginUser(req.body.user);
-      res.header('authorization', token).send(new Response('ok', 'Token Attached in Headers', 'Login Successfully', []));
+      res.header('authorization', token).send(new Response('ok', {
+        token: token,
+        roles: req.body.user.roles
+      }, 'Login Successfully', []));
     } catch (err) {
-      res.status(500).send(_error.default.SERVER_ERROR);
+      res.status(500).send(err.message);
     }
   }
 };
-var _default = operations;
+var _default = authCtrl;
 exports.default = _default;

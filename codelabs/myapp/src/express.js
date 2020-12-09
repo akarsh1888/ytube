@@ -7,11 +7,13 @@ import errorMessages from './config/error.messages'
 import indexRouter from './app/routes/index'
 import cors from 'cors'
 import morgan from 'morgan'
-import parentRouter from './app/routes/parent'
-import jwt from 'jsonwebtoken'
-var logger = require('winston')
-var hbs = require('express-handlebars')
-var path = require('path')
+import rootRouter from './app/routes/root.routes'
+import multer from 'multer'
+import logger from 'winston'
+import hbs from 'express-handlebars'
+import path from 'path'
+import Role from './app/models/role.model'
+const upload = multer()
 
 export const start = () => {
   // Initialize express app
@@ -40,18 +42,27 @@ export const start = () => {
   // CookieParser should be above session
   app.use(cookieParser())
 
-  /**************
-  MIddleware for transforming request,authentication,validation,
-   */
-  // Request body parsing middleware should be above methodOverride
-  app.use(json({ type: 'application/*', limit: '30mb' }))
-  // for using query string in the URL, body parser method library is used
-  app.use(urlencoded({ extended: true }))
   // for cross domain communication from browser
   const corsOptions = {
     exposedHeaders: 'Authorization',
   }
   app.use(cors(corsOptions))
+
+  /**************
+  MIddleware for transforming request,authentication,validation,
+   */
+  // Request body parsing middleware should be above methodOverride
+  // for parsing application/json
+  app.use(express.json({ type: 'application/*', limit: '30mb' }))
+  // for using query string in the URL, body parser method library is used
+  // for parsing application/x-www-form-urlencoded
+  app.use(express.urlencoded({ extended: true }))
+
+  // for parsing multipart/form-data
+  // so, it can receive form-data, raw, or x-www-form-urlencoded.
+  app.use(upload.array())
+  app.use(express.static('public'))
+
   // for logging out
   app.use(morgan('dev'))
   app.use(methodOverride())
@@ -63,46 +74,12 @@ export const start = () => {
   //   app.use(helmet.nosniff());
   //   app.use(helmet.ienoopen());
 
-  const authenticate = (req, res, next) => {
-    const authHeader = req.headers['authorization']
-    const token = authHeader && authHeader.split(' ')[1]
-    console.log(token)
-    if (!token) return res.status(401).send('No token passed')
 
-    jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, userKey) => {
-      if (err) return res.status(403).send('Token passed is invalid')
-      console.log(userKey)
-      req.user = userKey
-      next()
-    })
-  }
 
   app.disable('x-powered-by')
 
-  /*
-  //************* Middlewares has to be wrote before going to server routing/controlling program 
-  but has power to behave as a controller ie. sometimes they have to response to client there only without 
-  going to the next middleware...
-  but should be avoided, they should not response any data
-  */
-  const somemiddleman = (req, res, next) => {
-    console.log('Pass through me baby')
-    /**
-     * If error not handled properly */
-    // throw new Error("app will crash");
-    /*
-     * Sharing data between middlewares */
-    // attaching to request object
-    // req.data = "Some data";
-    next()
-  }
-  /* middlewares registerd on the routes */
-  app.use('/', [somemiddleman], (req, res, next) => {
-    // res.send({ message: req.data });
-    next()
-  })
   app.use('/', indexRouter)
-  app.use('/api', parentRouter)
+  app.use('/api', rootRouter)
 
   // app.get('*', (req, res) =>
   //   res.status(404).send({
@@ -111,15 +88,6 @@ export const start = () => {
   //   })
   // )
 
-  const users = [
-    { id: 1, username: 'admin', password: 'admin' },
-    { id: 2, username: 'guest', password: 'guest' },
-  ]
-
-  // secret api
-  app.get('/secret', [authenticate], (req, res) => {
-    res.status(200).json('This is a private resource')
-  })
 
   /***
    * When we call next() function on a middleware control passes to another middleware
@@ -127,7 +95,6 @@ export const start = () => {
    *   middleware if it any occurs
    *
    */
-  // error handler middleware if error occurs from the controller
   app.use(function (err, req, res, next) {
     let errorMsg
     if (err.name === 'SyntaxError' && err.message.indexOf('Unexpected') >= 0) {
@@ -148,8 +115,13 @@ export const start = () => {
     res.status(404).send(notFound)
   })
 
-  /************************************
-   * 88888 */
+  // async function one() {
+  //   const r = await Role.create({ name: 'admin' })
+  //   const p = await Role.create({ name: 'moderator' })
+  //   const q = await Role.create({ name: 'user' })
+  // }
+  // one()
+
   console.log('completed configuring express application')
   return app
 }

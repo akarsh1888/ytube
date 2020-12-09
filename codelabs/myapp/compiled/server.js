@@ -15,15 +15,23 @@ require('dotenv').config();
 const http = require('http');
 
 var logger = require('winston');
+
+var mongoose = require('mongoose');
 /**
  * Main application entry file.
  * Please note that the order of loading is important.
  */
+// const MongoClient = require('mongodb').MongoClient;
 
 
-var mongoose = require('mongoose');
+const uri = 'mongodb+srv://akarsh:akarsh@cluster0.eginw.mongodb.net/test?retryWrites=true&w=majority'; // const client = new MongoClient(uri, { useNewUrlParser: true });
+// client.connect(err => {
+//   const collection = client.db("test").collection("devices");
+//   // perform actions on the collection object
+//   client.close();
+// });
 
-mongoose.connect(process.env.MONGO, {
+mongoose.connect(uri, {
   useNewUrlParser: true,
   useUnifiedTopology: true
 }); // Bootstrap sequelize models

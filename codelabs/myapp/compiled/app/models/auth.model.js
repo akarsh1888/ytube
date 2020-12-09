@@ -9,12 +9,12 @@ var _mongoose = _interopRequireDefault(require("mongoose"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var auth = new _mongoose.default.Schema({
+var authSchema = new _mongoose.default.Schema({
   email: {
     type: String,
     required: true
   },
-  username: {
+  userName: {
     type: String,
     required: true
   },
@@ -27,10 +27,19 @@ var auth = new _mongoose.default.Schema({
   date: {
     type: Date,
     default: Date.now
+  },
+  roles: [{
+    type: _mongoose.default.Schema.Types.ObjectId,
+    ref: 'Role'
+  }],
+  profile: {
+    type: _mongoose.default.Schema.Types.ObjectId,
+    ref: 'Profile'
   }
+}, {
+  timestamps: true
 });
 
-const Auth = _mongoose.default.model('auth', auth);
+var _default = _mongoose.default.model('Auth', authSchema);
 
-var _default = Auth;
 exports.default = _default;

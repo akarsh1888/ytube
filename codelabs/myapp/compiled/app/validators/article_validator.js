@@ -15,7 +15,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 // FOR VALIDATING THE REQUEST BODY
 const validators = {
   reqValidator: (req, resp, next) => {
-    const body = req.body;
+    const body = req.body.article;
     let message;
 
     if (body) {
@@ -35,7 +35,7 @@ const validators = {
   },
   // UNIQUE ID
   uuidValidator: (req, resp, next) => {
-    const postId = req.params.postId;
+    const postId = req.params.articleId;
 
     if (true) {
       next();

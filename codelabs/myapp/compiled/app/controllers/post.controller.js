@@ -7,7 +7,7 @@ exports.default = void 0;
 
 var _error = _interopRequireDefault(require("../../config/error.messages"));
 
-var articleService = _interopRequireWildcard(require("../services/article_services"));
+var postService = _interopRequireWildcard(require("../services/post.services"));
 
 function _getRequireWildcardCache() { if (typeof WeakMap !== "function") return null; var cache = new WeakMap(); _getRequireWildcardCache = function () { return cache; }; return cache; }
 
@@ -15,11 +15,26 @@ function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj;
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-const operations = {
-  // get all artticles
-  list: async (req, res, next) => {
+const postCtrl = {
+  create: async (req, res, next) => {
     try {
-      const data = await articleService.findAll();
+      const post = req.body.post;
+      const {
+        id
+      } = req.user;
+      const data = await postService.createPost(post, id);
+      res.status(200).json(data);
+    } catch (err) {
+      res.status(500).send(_error.default.SERVER_ERROR);
+    }
+  },
+  // get all artticles
+  listAll: async (req, res, next) => {
+    try {
+      const {
+        id
+      } = req.user;
+      const data = await postService.listAll(id);
       res.status(200).json(data);
     } catch (err) {
       // next(err);  u can choose either this OR below for error handling
@@ -28,72 +43,68 @@ const operations = {
       res.status(500).send(_error.default.SERVER_ERROR);
     }
   },
-  // get one article
-  get: async (req, res, next) => {
-    const postId = req.params.articleId;
-
-    try {
-      const data = await articleService.findById(postId);
-      res.status(200).json(data);
-    } catch (err) {
-      // next(err);  u can choose either this OR below for error handling
-      // error handling 1>>> custom middleware 2>>>> normal error response
-      res.status(500).send(_error.default.SERVER_ERROR);
-    }
-  },
   // update one article
   put: async (req, res, next) => {
-    const postId = req.params.articleId;
-    const post = req.body;
+    const postId = req.params.postId;
+    const {
+      article
+    } = req.body;
 
     try {
-      const data = await articleService.updatePost(postId, post);
+      const data = await postService.updatePost(postId, article);
       res.status(200).json(data);
     } catch (err) {
-      res.status(500).send(_error.default.SERVER_ERROR);
+      res.status(500).send(err.message);
     }
   },
   delete: async (req, res) => {
     const {
-      articleId
+      postId
     } = req.params;
-    console.log('HI', articleId);
 
     try {
-      const data = await articleService.deletePost(articleId);
+      const data = await postService.deletePost(postId);
       res.status(200).json(data);
     } catch (err) {
       res.status(500).send(_error.default.SERVER_ERROR);
     }
   },
-  // get a post by a user
-  // /api/users/:userid/articles  GET
-  getPostByUser: async (req, res, next) => {
+  getPostByTitle: async (req, res, next) => {
     const {
-      userId
-    } = req.params;
+      keyword
+    } = req.query;
 
     try {
-      const data = await articleService.getPostByUser(userId);
-      res.status(200).json(data);
+      const data = await postService.getPostByTitle(keyword);
+      res.status(200).send(data);
     } catch (err) {
       res.status(500).send(_error.default.SERVER_ERROR);
     }
   },
-  // create a post by a user
-  // /api/users/:userid/articles  POST
-  create: async (req, res, next) => {
+  getPostByContentLength: async (req, res, next) => {
+    const {
+      min,
+      max
+    } = req.query;
+
     try {
-      const post = req.body;
+      const data = await postService.getPostByContentLength(min, max);
+      res.status(200).send(data);
+    } catch (err) {
+      res.status(500).send(_error.default.SERVER_ERROR);
+    }
+  },
+  getTotalPostCountByUser: async (req, res, next) => {
+    try {
       const {
-        userId
-      } = req.params;
-      const data = await articleService.createPost(post, userId);
+        id
+      } = req.user;
+      const data = await postService.getTotalPostCountByUser(id);
       res.status(200).json(data);
     } catch (err) {
       res.status(500).send(_error.default.SERVER_ERROR);
     }
   }
 };
-var _default = operations;
+var _default = postCtrl;
 exports.default = _default;

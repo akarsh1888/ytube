@@ -1,7 +1,9 @@
+/* eslint-disable camelcase */
 import bcrypt from 'bcrypt'
 import commonUtil from '../util/common.util'
 import errorMessages from '../../config/error.messages'
 import Auth from '../models/auth.model'
+import Role from '../models/role.model'
 
 function Response(status, data, messages, errors) {
   this.status = status
@@ -33,35 +35,69 @@ const validators = {
 }
 export default validators
 
-export const hashedPassword = async (req, res, next) => {
-  const { password, username, email } = req.body.user
-  const hashedPassword = await bcrypt.hash(password, 10)
-  req.body.user.password = hashedPassword
-  const data = await Auth.findOne({ email })
-  if (data)
-    return res.send(
-      new Response(
-        'error',
-        'User already registered,please sign in',
-        [],
-        'Email already exist in the database'
+export const verifySignUp = async (req, res, next) => {
+  try {
+    const {
+      userName,
+      email,
+      password,
+      password_confirmation,
+      roles,
+    } = req.body.user
+    if (!(userName && email && password && password_confirmation && roles))
+      return res.send(
+        new Response('error', 'Fill all Input Fields', [], 'Incorrect Input')
       )
-    )
-  const data2 = await Auth.findOne({ username })
-  if (data2)
-    return res.send(
-      new Response(
-        'error',
-        'User name already taken,please choose another one',
-        [],
-        'Username already exist in the database'
+    if (password !== password_confirmation)
+      return res.send(
+        new Response('error', 'Password Not Matching', [], 'Incorrect Input')
       )
-    )
+    const data = await Auth.findOne({ email })
+    if (data)
+      return res.send(
+        new Response(
+          'error',
+          'Email already registered,please Sign-In',
+          [],
+          'Email already exist in the database'
+        )
+      )
+    const data2 = await Auth.findOne({ userName })
+    if (data2)
+      return res.send(
+        new Response(
+          'error',
+          'User name already taken,please choose another one',
+          [],
+          'Username already exist in the database'
+        )
+      )
 
+    const hashedPassword = await bcrypt.hash(password, 10)
+    req.body.user.password = hashedPassword
+  } catch (error) {
+    res.status(500).send(error.Message)
+  }
   next()
 }
 
-export const checkLogin = async (req, res, next) => {
+export const assignRoleId = async (req, res, next) => {
+  try {
+    if (req.body.user.roles.length) {
+      const roles = await Role.find({ name: { $in: req.body.user.roles } })
+      req.body.user.roles = roles.map((role) => role._id)
+      next()
+    } else {
+      const role = await Role.findOne({ name: 'user' })
+      req.body.user.roles = [role._id]
+      next()
+    }
+  } catch (err) {
+    res.status(500).send(err.Message)
+  }
+}
+
+export const verifyLogin = async (req, res, next) => {
   const { password, email } = req.body.user
   try {
     const data = await Auth.findOne({ email })
@@ -80,9 +116,23 @@ export const checkLogin = async (req, res, next) => {
       req.body.user.id = await data._id
       next()
     } else {
-      return res.send(new Response('error', {}, [], "Password doesn't match"))
+      return res.send(
+        new Response(
+          'error',
+          'Password Given is Wrong',
+          [],
+          "Password doesn't match"
+        )
+      )
     }
   } catch (error) {
     res.status(500).send(errorMessages.SERVER_ERROR)
   }
 }
+
+export const addAuthorities = async (req, res, next) => {
+  const user = await Auth.findById(req.body.user.id).populate('roles').exec()
+  req.body.user.roles = user.roles.map((role) => role.name.toUpperCase())
+  next()
+}
+

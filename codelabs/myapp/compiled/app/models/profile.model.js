@@ -8,29 +8,15 @@ exports.default = void 0;
 var mongoose = require('mongoose'); // small letter for schema definition
 
 
-var user = new mongoose.Schema({
-  userName: {
-    type: String,
-    required: true
-  },
+var profileSchema = new mongoose.Schema({
   firstName: {
     type: String,
-    unique: true
+    default: ''
   },
   lastName: {
-    type: String
+    type: String,
+    default: ''
   },
-  email: {
-    type: String
-  },
-  betaUser: {
-    default: false,
-    type: Boolean
-  },
-  birthDate: Date,
-  pets: [{
-    type: String
-  }],
   address: {
     other: Boolean,
     street: String,
@@ -39,12 +25,35 @@ var user = new mongoose.Schema({
     city: String,
     State: String
   },
+  email: {
+    type: String
+  },
+  birthDate: {
+    type: Date,
+    default: Date.now
+  },
+  betaUser: {
+    default: false,
+    type: Boolean
+  },
+  pets: [{
+    type: String
+  }],
   posts: [{
     type: mongoose.Schema.Types.ObjectId,
-    ref: 'article'
+    ref: 'Post'
   }]
 }, {
   timestamps: true
+});
+profileSchema.virtual('totalPostCount').get(function () {
+  return this.posts.length;
+});
+profileSchema.index({
+  // district: 1,
+  email: 1
+}, {
+  unique: true
 });
 /*  
 schema hold the instructions for model, ie.validation,indexes etc.
@@ -52,6 +61,6 @@ here schema is converted into model,model is the JSON way of interacting with th
 */
 // capital letter for a model
 
-var _default = mongoose.model('user', user);
+var _default = mongoose.model('Profile', profileSchema);
 
 exports.default = _default;

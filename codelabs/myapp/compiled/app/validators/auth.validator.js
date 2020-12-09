@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.checkLogin = exports.hashedPassword = exports.default = void 0;
+exports.addAuthorities = exports.verifyLogin = exports.assignRoleId = exports.verifySignUp = exports.default = void 0;
 
 var _bcrypt = _interopRequireDefault(require("bcrypt"));
 
@@ -13,8 +13,11 @@ var _error = _interopRequireDefault(require("../../config/error.messages"));
 
 var _auth = _interopRequireDefault(require("../models/auth.model"));
 
+var _role = _interopRequireDefault(require("../models/role.model"));
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+/* eslint-disable camelcase */
 function Response(status, data, messages, errors) {
   this.status = status;
   this.data = data;
@@ -48,28 +51,61 @@ const validators = {
 var _default = validators;
 exports.default = _default;
 
-const hashedPassword = async (req, res, next) => {
-  const {
-    password,
-    username,
-    email
-  } = req.body.user;
-  const hashedPassword = await _bcrypt.default.hash(password, 10);
-  req.body.user.password = hashedPassword;
-  const data = await _auth.default.findOne({
-    email
-  });
-  if (data) return res.send(new Response('error', 'User already registered,please sign in', [], 'Email already exist in the database'));
-  const data2 = await _auth.default.findOne({
-    username
-  });
-  if (data2) return res.send(new Response('error', 'User name already taken,please choose another one', [], 'Username already exist in the database'));
+const verifySignUp = async (req, res, next) => {
+  try {
+    const {
+      userName,
+      email,
+      password,
+      password_confirmation,
+      roles
+    } = req.body.user;
+    if (!(userName && email && password && password_confirmation && roles)) return res.send(new Response('error', 'Fill all Input Fields', [], 'Incorrect Input'));
+    if (password !== password_confirmation) return res.send(new Response('error', 'Password Not Matching', [], 'Incorrect Input'));
+    const data = await _auth.default.findOne({
+      email
+    });
+    if (data) return res.send(new Response('error', 'Email already registered,please Sign-In', [], 'Email already exist in the database'));
+    const data2 = await _auth.default.findOne({
+      userName
+    });
+    if (data2) return res.send(new Response('error', 'User name already taken,please choose another one', [], 'Username already exist in the database'));
+    const hashedPassword = await _bcrypt.default.hash(password, 10);
+    req.body.user.password = hashedPassword;
+  } catch (error) {
+    res.status(500).send(error.Message);
+  }
+
   next();
 };
 
-exports.hashedPassword = hashedPassword;
+exports.verifySignUp = verifySignUp;
 
-const checkLogin = async (req, res, next) => {
+const assignRoleId = async (req, res, next) => {
+  try {
+    if (req.body.user.roles.length) {
+      const roles = await _role.default.find({
+        name: {
+          $in: req.body.user.roles
+        }
+      });
+      req.body.user.roles = roles.map(role => role._id);
+      next();
+    } else {
+      const role = await _role.default.findOne({
+        name: 'user'
+      });
+      req.body.user.roles = [role._id];
+      next();
+    }
+  } catch (err) {
+    res.status(500).send(err.Message);
+  }
+};
+
+exports.assignRoleId = assignRoleId;
+
+const verifyLogin = async (req, res, next) => {
   const {
     password,
     email
@@ -88,11 +124,19 @@ const checkLogin = async (req, res, next) => {
       req.body.user.id = await data._id;
       next();
     } else {
-      return res.send(new Response('error', {}, [], "Password doesn't match"));
+      return res.send(new Response('error', 'Password Given is Wrong', [], "Password doesn't match"));
     }
   } catch (error) {
     res.status(500).send(_error.default.SERVER_ERROR);
   }
 };
 
-exports.checkLogin = checkLogin;
+exports.verifyLogin = verifyLogin;
+
+const addAuthorities = async (req, res, next) => {
+  const user = await _auth.default.findById(req.body.user.id).populate('roles').exec();
+  req.body.user.roles = user.roles.map(role => role.name.toUpperCase());
+  next();
+};
+
+exports.addAuthorities = addAuthorities;
